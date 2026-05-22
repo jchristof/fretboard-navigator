@@ -18,13 +18,27 @@ const DEFAULTS = {
   practice:   false,
 };
 
-let state = { ...DEFAULTS };
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('fretboardlab') ?? '{}');
+    return { ...DEFAULTS, ...saved, practice: false };
+  } catch {
+    return { ...DEFAULTS };
+  }
+}
+
+function saveState(s) {
+  try { localStorage.setItem('fretboardlab', JSON.stringify(s)); } catch {}
+}
+
+let state = loadState();
 
 export function getState() { return state; }
 
 export function setState(patch) {
   Object.assign(state, patch);
   if (patch.theme !== undefined) document.body.className = `theme-${state.theme}`;
+  saveState(state);
   render();
   controls.update(state);
 }
@@ -41,6 +55,8 @@ function render() {
     }
   });
 }
+
+document.body.className = `theme-${state.theme}`;
 
 controls.init(setState);
 controls.update(state);
