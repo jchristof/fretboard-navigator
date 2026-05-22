@@ -1,0 +1,38 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body.theme-dark {
+  --bg:           #0d0d0d;
+  --surface:      #161616;
+  --border:       #2a2a2a;
+  --text:         #dddddd;
+  --text-muted:   #555555;
+  --root-color:   #e67e22;
+  --tone-color:   #3498db;
+  --fretboard-bg: #1a1008;
+  --nut-color:    #c8b88a;
+  --string-color: #bbbbbb;
+  --fret-color:   #3a3020;
+  --inlay-color:  #2a2010;
+}
+
+body.theme-light {
+  --bg:           #f5f0e8;
+  --surface:      #e8e0d0;
+  --border:       #bbbbbb;
+  --text:         #222222;
+  --text-muted:   #888888;
+  --root-color:   #c0392b;
+  --tone-color:   #2980b9;
+  --fretboard-bg: #d4c9a8;
+  --nut-color:    #5a4a30;
+  --string-color: #555555;
+  --fret-color:   #b8aa88;
+  --inlay-color:  #b0a080;
+}
+
+body { background: var(--bg); color: var(--text); font-family: sans-serif; }
+
+#app { display: flex; flex-direction: column; min-height: 100vh; padding: 12px; gap: 12px; }
+
+#fretboard-container { width: 100%; }
+#fretboard-svg { width: 100%; display: block; }
