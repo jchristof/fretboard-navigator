@@ -1,4 +1,7 @@
-import { TUNINGS, getNoteAtFret } from './music.js';
+import {
+  TUNINGS, TUNING_OCTAVES,
+  getNoteAtFret, getNotesInScale, getChordNotes, getIntervalLabel, noteToMidi,
+} from './music.js';
 
 const SVG_W = 700, SVG_H = 230;
 const NUT_X = 30, NUT_W = 6;
@@ -105,8 +108,93 @@ function drawStructure(svg, state) {
   }
 }
 
-export function render(state) {
+function drawDots(svg, state, onDotClick) {
+  const { strings: stringCount, fretCount, key, scale, mode, labelMode } = state;
+  const fretAreaW = SVG_W - NUT_X - NUT_W - 10;
+  const fretW = fretAreaW / fretCount;
+
+  const tuning = (TUNINGS[state.tuning] ?? TUNINGS['Standard']).slice().reverse();
+  const octaves = (TUNING_OCTAVES[state.tuning] ?? TUNING_OCTAVES['Standard']).slice().reverse();
+  const activeNotes = mode === 'chord'
+    ? getChordNotes(key, scale)
+    : getNotesInScale(key, scale);
+
+  const fretRange = getPositionRange(state);
+
+  for (let si = 0; si < stringCount; si++) {
+    const openNote = tuning[si] ?? 'E';
+    const baseOctave = octaves[si] ?? 3;
+    const y = stringY(si, stringCount);
+
+    for (let fret = 0; fret <= fretCount; fret++) {
+      if (fretRange && (fret < fretRange.start || fret > fretRange.end)) continue;
+      const note = getNoteAtFret(openNote, fret);
+      if (!activeNotes.includes(note)) continue;
+
+      const x = dotX(fret, fretW);
+      const isRoot = note === key;
+      const midi = noteToMidi(openNote, fret, baseOctave);
+
+      const g = ns('g', { class: 'dot', style: 'cursor:pointer' });
+      g.appendChild(ns('circle', {
+        cx: x, cy: y, r: 11,
+        fill: isRoot ? cssVar('--root-color') : cssVar('--tone-color'),
+      }));
+
+      if (!state.practice) {
+        const labelText = getDotLabel(key, note, labelMode);
+        const t = ns('text', {
+          x, y: y + 3.5,
+          fill: '#fff',
+          'font-size': 8,
+          'text-anchor': 'middle',
+          'font-weight': isRoot ? 'bold' : 'normal',
+          'pointer-events': 'none',
+        });
+        t.textContent = labelText;
+        g.appendChild(t);
+      }
+
+      g.dataset.midi = midi;
+      g.dataset.note = note;
+      g.dataset.fret = fret;
+      g.dataset.string = si;
+      g.addEventListener('click', () => {
+        g.classList.add('dot-flash');
+        g.addEventListener('animationend', () => g.classList.remove('dot-flash'), { once: true });
+        if (onDotClick) onDotClick(g.dataset);
+      });
+      svg.appendChild(g);
+    }
+  }
+}
+
+function getDotLabel(root, note, labelMode) {
+  switch (labelMode) {
+    case 'notes':     return note;
+    case 'intervals': return getIntervalLabel(root, note);
+    case 'degrees':   return getIntervalLabel(root, note).replace('b','♭').replace('#','♯');
+    default:          return '';
+  }
+}
+
+function getPositionRange(state) {
+  if (state.position === 'all') return null;
+  const posIndex = parseInt(state.position.replace('pos', ''), 10) - 1;
+  const tuningLowE = TUNINGS[state.tuning]?.[0] ?? 'E';
+  const rootPositions = [];
+  for (let f = 0; f < 12; f++) {
+    if (getNoteAtFret(tuningLowE, f) === state.key) rootPositions.push(f);
+  }
+  const allPos = [...rootPositions, (rootPositions[0] ?? 0) + 12, (rootPositions[1] ?? 0) + 12]
+    .sort((a, b) => a - b);
+  const start = Math.max(0, (allPos[posIndex % allPos.length] ?? 0) - 1);
+  return { start, end: start + 4 };
+}
+
+export function render(state, onDotClick = null) {
   const svg = document.getElementById('fretboard-svg');
   while (svg.firstChild) svg.removeChild(svg.firstChild);
   drawStructure(svg, state);
+  drawDots(svg, state, onDotClick);
 }

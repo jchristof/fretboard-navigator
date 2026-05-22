@@ -22,9 +22,9 @@ export function getState() { return state; }
 export function setState(patch) {
   Object.assign(state, patch);
   if (patch.theme) document.body.className = `theme-${state.theme}`;
-  fretboard.render(state);
+  fretboard.render(state, null);
   controls.update(state);
 }
 
 controls.init(setState);
-fretboard.render(state);
+fretboard.render(state, null);
