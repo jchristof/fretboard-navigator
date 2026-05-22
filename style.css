@@ -167,3 +167,17 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; }
 .answer-btn:hover:not(:disabled) { border-color: var(--tone-color); }
 .answer-btn.answer-correct { border-color: #27ae60; color: #27ae60; background: #0d2b1a; }
 .answer-btn.answer-wrong   { border-color: #e74c3c; color: #e74c3c; background: #2b0d0d; }
+
+.dot circle {
+  transition: r 0.1s ease, opacity 0.1s ease;
+}
+
+.dot:hover circle { r: 13; }
+
+@keyframes dot-flash {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.3; }
+  100% { opacity: 1; }
+}
+
+.dot-flash circle { animation: dot-flash 0.3s ease; }
