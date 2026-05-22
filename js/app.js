@@ -1,6 +1,7 @@
 import * as fretboard from './fretboard.js';
 import * as controls from './controls.js';
 import * as audio from './audio.js';
+import * as practice from './practice.js';
 import { TUNINGS, TUNING_OCTAVES } from './music.js';
 
 const DEFAULTS = {
@@ -30,10 +31,14 @@ export function setState(patch) {
 
 function render() {
   fretboard.render(state, (dotData) => {
-    const tuning = (TUNINGS[state.tuning] ?? TUNINGS['Standard']).slice().reverse();
-    const octaves = (TUNING_OCTAVES[state.tuning] ?? TUNING_OCTAVES['Standard']).slice().reverse();
-    const si = parseInt(dotData.string, 10);
-    audio.playNote(tuning[si] ?? 'E', parseInt(dotData.fret, 10), octaves[si] ?? 3);
+    if (state.practice) {
+      practice.handleDotClick(dotData, state);
+    } else {
+      const tuning = (TUNINGS[state.tuning] ?? TUNINGS['Standard']).slice().reverse();
+      const octaves = (TUNING_OCTAVES[state.tuning] ?? TUNING_OCTAVES['Standard']).slice().reverse();
+      const si = parseInt(dotData.string, 10);
+      audio.playNote(tuning[si] ?? 'E', parseInt(dotData.fret, 10), octaves[si] ?? 3);
+    }
   });
 }
 
@@ -43,6 +48,10 @@ controls.update(state);
 document.getElementById('btn-play')?.addEventListener('click', () => {
   if (state.mode === 'chord') audio.playChord(state);
   else audio.playScale(state);
+});
+
+document.getElementById('btn-practice')?.addEventListener('click', () => {
+  practice.activate(state, setState);
 });
 
 render();

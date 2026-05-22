@@ -106,3 +106,64 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; }
 #controls-bar[data-layout="single"]  .layout-double-only { display: none; }
 #controls-bar[data-layout="double"]  .layout-single-only { display: none; }
 #controls-bar:not([data-layout="double"]) .controls-row-secondary { display: none; }
+
+#practice-overlay {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 12px 16px;
+}
+
+#practice-panel { display: flex; flex-direction: column; gap: 10px; }
+
+#practice-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+#practice-score { font-size: 14px; font-weight: bold; color: var(--text); min-width: 60px; }
+
+#drill-type-buttons { display: flex; gap: 6px; }
+
+.drill-btn {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+.drill-btn.active { border-color: var(--tone-color); color: var(--tone-color); }
+
+#btn-exit-practice {
+  margin-left: auto;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+#practice-prompt { font-size: 13px; color: var(--text-muted); }
+
+#practice-answers { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.answer-btn {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 8px 16px;
+  cursor: pointer;
+  min-width: 60px;
+  text-align: center;
+}
+.answer-btn:hover:not(:disabled) { border-color: var(--tone-color); }
+.answer-btn.answer-correct { border-color: #27ae60; color: #27ae60; background: #0d2b1a; }
+.answer-btn.answer-wrong   { border-color: #e74c3c; color: #e74c3c; background: #2b0d0d; }
