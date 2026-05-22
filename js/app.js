@@ -27,4 +27,5 @@ export function setState(patch) {
 }
 
 controls.init(setState);
+controls.update(state);
 fretboard.render(state, null);

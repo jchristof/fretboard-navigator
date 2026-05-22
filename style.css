@@ -36,3 +36,73 @@ body { background: var(--bg); color: var(--text); font-family: sans-serif; }
 
 #fretboard-container { width: 100%; }
 #fretboard-svg { width: 100%; display: block; }
+
+#controls-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.controls-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ctrl-group label {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+}
+
+.ctrl-group select {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 4px 6px;
+}
+
+.ctrl-sep {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+  align-self: flex-end;
+  margin-bottom: 2px;
+}
+
+.ctrl-actions {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: flex-end;
+}
+
+.ctrl-actions button {
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.ctrl-actions button:hover { border-color: var(--text-muted); }
+
+#controls-bar[data-layout="single"]  .layout-double-only { display: none; }
+#controls-bar[data-layout="double"]  .layout-single-only { display: none; }
+#controls-bar:not([data-layout="double"]) .controls-row-secondary { display: none; }
