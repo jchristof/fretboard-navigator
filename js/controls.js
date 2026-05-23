@@ -4,11 +4,15 @@ const KEYS = ['A','A#','B','C','C#','D','D#','E','F','F#','G','G#'];
 const LABEL_MODES = [
   ['notes','Notes'], ['intervals','Intervals'], ['degrees','Degrees'], ['none','None']
 ];
-const POSITIONS = [
-  ['all','All'], ['pos1','Pos 1'], ['pos2','Pos 2'],
-  ['pos3','Pos 3'], ['pos4','Pos 4'], ['pos5','Pos 5'],
-];
 const STRING_COUNTS = [4, 5, 6, 7, 8];
+
+function positionOptionsHTML() {
+  let html = `<option value="all">All</option>`;
+  for (let i = 1; i <= 7; i++) {
+    html += `<option value="pos${i}">Box ${i}</option>`;
+  }
+  return html;
+}
 
 function options(pairs) {
   return pairs.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
@@ -46,7 +50,7 @@ function buildHTML() {
       <div class="ctrl-sep layout-single-only"></div>
       <div class="ctrl-group layout-single-only">
         <label for="ctrl-position">Position</label>
-        <select id="ctrl-position">${options(POSITIONS)}</select>
+        <select id="ctrl-position">${positionOptionsHTML()}</select>
       </div>
       <div class="ctrl-sep layout-single-only"></div>
       <div class="ctrl-group layout-single-only">
@@ -68,7 +72,7 @@ function buildHTML() {
       <div class="ctrl-sep"></div>
       <div class="ctrl-group">
         <label for="ctrl-position-2">Position</label>
-        <select id="ctrl-position-2">${options(POSITIONS)}</select>
+        <select id="ctrl-position-2">${positionOptionsHTML()}</select>
       </div>
       <div class="ctrl-sep"></div>
       <div class="ctrl-group">

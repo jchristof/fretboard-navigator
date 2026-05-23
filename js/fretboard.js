@@ -1,6 +1,7 @@
 import {
-  TUNINGS, TUNING_OCTAVES,
+  NOTES, SCALES, CHORDS, TUNINGS, TUNING_OCTAVES,
   getNoteAtFret, getNotesInScale, getChordNotes, getIntervalLabel, noteToMidi,
+  normalize,
 } from './music.js';
 
 const SVG_W = 700, SVG_H = 230;
@@ -183,14 +184,33 @@ function getDotLabel(root, note, labelMode) {
 function getPositionRange(state) {
   if (state.position === 'all') return null;
   const posIndex = parseInt(state.position.replace('pos', ''), 10) - 1;
-  const tuningLowE = TUNINGS[state.tuning]?.[0] ?? 'E';
-  const rootPositions = [];
+  if (posIndex < 0) return null;
+
+  const intervals = state.mode === 'chord'
+    ? (CHORDS[state.scale] ?? CHORDS['Major'])
+    : (SCALES[state.scale] ?? SCALES['Major']);
+
+  const degreeIdx = posIndex % intervals.length;
+  const cycleNum  = Math.floor(posIndex / intervals.length);
+
+  const tuningLowestStr = TUNINGS[state.tuning]?.[0] ?? 'E';
+  const rootIdx = NOTES.indexOf(normalize(state.key));
+  const degreeNote = NOTES[(rootIdx + intervals[degreeIdx]) % 12];
+
+  let anchor = -1;
+  let found = 0;
   for (let f = 0; f <= state.fretCount; f++) {
-    if (getNoteAtFret(tuningLowE, f) === state.key) rootPositions.push(f);
+    if (getNoteAtFret(tuningLowestStr, f) === degreeNote) {
+      if (found === cycleNum) { anchor = f; break; }
+      found++;
+    }
   }
-  if (rootPositions.length === 0) return null;
-  const start = Math.max(0, (rootPositions[posIndex % rootPositions.length] ?? 0) - 1);
-  return { start, end: Math.min(state.fretCount, start + 4) };
+  if (anchor < 0) return null;
+
+  return {
+    start: anchor,
+    end:   Math.min(state.fretCount, anchor + 4),
+  };
 }
 
 export function render(state, onDotClick = null) {
