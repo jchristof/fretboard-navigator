@@ -4,13 +4,14 @@ import {
 } from './music.js';
 
 const SVG_W = 700, SVG_H = 230;
-const NUT_X = 30, NUT_W = 6;
+const NUT_X = 36, NUT_W = 6;
+const OPEN_X = 18;
 const FB_TOP = 10, FB_H = 180;
 const STRING_PAD = 20;
 const FRET_NUM_Y = SVG_H - 8;
 
-const INLAY_FRETS = new Set([3, 5, 7, 9]);
-const DOUBLE_INLAY_FRETS = new Set([12]);
+const INLAY_FRETS = new Set([3, 5, 7, 9, 15, 17, 19, 21]);
+const DOUBLE_INLAY_FRETS = new Set([12, 24]);
 
 function ns(tag, attrs = {}) {
   const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
@@ -23,7 +24,8 @@ function fretLineX(fret, fretW) {
 }
 
 function dotX(fret, fretW) {
-  return fretLineX(fret, fretW) + fretW / 2;
+  if (fret === 0) return OPEN_X;
+  return fretLineX(fret, fretW) - fretW / 2;
 }
 
 function stringY(index, count) {
@@ -86,7 +88,7 @@ function drawStructure(svg, state) {
       'stroke-width': stringWeight(i, stringCount),
     }));
     const label = ns('text', {
-      x: NUT_X - 8, y: y + 3,
+      x: OPEN_X, y: y + 3,
       fill: cssVar('--text-muted'),
       'font-size': 10, 'text-anchor': 'middle',
     });
@@ -96,7 +98,7 @@ function drawStructure(svg, state) {
 
   for (let f = 0; f <= fretCount; f++) {
     const x = f === 0
-      ? NUT_X + NUT_W + fretW / 2
+      ? OPEN_X
       : fretLineX(f, fretW) - fretW / 2;
     const num = ns('text', {
       x, y: FRET_NUM_Y,
@@ -183,13 +185,12 @@ function getPositionRange(state) {
   const posIndex = parseInt(state.position.replace('pos', ''), 10) - 1;
   const tuningLowE = TUNINGS[state.tuning]?.[0] ?? 'E';
   const rootPositions = [];
-  for (let f = 0; f < 12; f++) {
+  for (let f = 0; f <= state.fretCount; f++) {
     if (getNoteAtFret(tuningLowE, f) === state.key) rootPositions.push(f);
   }
-  const allPos = [...rootPositions, (rootPositions[0] ?? 0) + 12, (rootPositions[1] ?? 0) + 12]
-    .sort((a, b) => a - b);
-  const start = Math.max(0, (allPos[posIndex % allPos.length] ?? 0) - 1);
-  return { start, end: start + 4 };
+  if (rootPositions.length === 0) return null;
+  const start = Math.max(0, (rootPositions[posIndex % rootPositions.length] ?? 0) - 1);
+  return { start, end: Math.min(state.fretCount, start + 4) };
 }
 
 export function render(state, onDotClick = null) {

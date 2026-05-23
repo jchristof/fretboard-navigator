@@ -10,7 +10,7 @@ const DEFAULTS = {
   mode:       'scale',
   tuning:     'Standard',
   strings:    6,
-  fretCount:  12,
+  fretCount:  24,
   labelMode:  'intervals',
   position:   'all',
   theme:      'dark',
@@ -20,7 +20,7 @@ const DEFAULTS = {
 
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem('fretboardlab') ?? '{}');
+    const saved = JSON.parse(localStorage.getItem('fretboardlab-v2') ?? '{}');
     return { ...DEFAULTS, ...saved, practice: false };
   } catch {
     return { ...DEFAULTS };
@@ -28,7 +28,7 @@ function loadState() {
 }
 
 function saveState(s) {
-  try { localStorage.setItem('fretboardlab', JSON.stringify(s)); } catch {}
+  try { localStorage.setItem('fretboardlab-v2', JSON.stringify(s)); } catch {}
 }
 
 let state = loadState();
