@@ -122,32 +122,32 @@ function drawDots(svg, state, onDotClick) {
     ? getChordNotes(key, scale)
     : getNotesInScale(key, scale);
 
-  const fretRange = getPositionRange(state);
+  let stringDots;
+  if (state.pattern === '3nps') {
+    stringDots = compute3NPSDots(state, activeNotes, tuning, octaves);
+  } else if (state.pattern === 'box') {
+    const fretRange = getPositionRange(state);
+    stringDots = computeWindowDots(state, activeNotes, tuning, octaves, fretRange);
+    if (fretRange) applyBoxDedup(stringDots);
+  } else {
+    stringDots = computeWindowDots(state, activeNotes, tuning, octaves, null);
+  }
 
-  for (let si = 0; si < stringCount; si++) {
-    const openNote = tuning[si] ?? 'E';
-    const baseOctave = octaves[si] ?? 3;
-    const y = stringY(si, stringCount);
-
-    for (let fret = 0; fret <= fretCount; fret++) {
-      if (fretRange && (fret < fretRange.start || fret > fretRange.end)) continue;
-      const note = getNoteAtFret(openNote, fret);
-      if (!activeNotes.includes(note)) continue;
-
-      const x = dotX(fret, fretW);
-      const isRoot = note === key;
-      const midi = noteToMidi(openNote, fret, baseOctave);
+  for (const dots of stringDots) {
+    for (const d of dots) {
+      const x = dotX(d.fret, fretW);
+      const isRoot = d.note === key;
 
       const g = ns('g', { class: 'dot', style: 'cursor:pointer' });
       g.appendChild(ns('circle', {
-        cx: x, cy: y, r: 11,
+        cx: x, cy: d.y, r: 11,
         fill: isRoot ? cssVar('--root-color') : cssVar('--tone-color'),
       }));
 
       if (!state.practice) {
-        const labelText = getDotLabel(key, note, labelMode);
+        const labelText = getDotLabel(key, d.note, labelMode);
         const t = ns('text', {
-          x, y: y + 3.5,
+          x, y: d.y + 3.5,
           fill: '#fff',
           'font-size': 8,
           'text-anchor': 'middle',
@@ -158,10 +158,10 @@ function drawDots(svg, state, onDotClick) {
         g.appendChild(t);
       }
 
-      g.dataset.midi = midi;
-      g.dataset.note = note;
-      g.dataset.fret = fret;
-      g.dataset.string = si;
+      g.dataset.midi = d.midi;
+      g.dataset.note = d.note;
+      g.dataset.fret = d.fret;
+      g.dataset.string = d.si;
       g.addEventListener('click', () => {
         g.classList.add('dot-flash');
         g.addEventListener('animationend', () => g.classList.remove('dot-flash'), { once: true });
@@ -181,10 +181,10 @@ function getDotLabel(root, note, labelMode) {
   }
 }
 
-function getPositionRange(state) {
-  if (state.position === 'all') return null;
-  const posIndex = parseInt(state.position.replace('pos', ''), 10) - 1;
-  if (posIndex < 0) return null;
+function getPositionAnchor(state) {
+  const posStr = state.position ?? '';
+  const posIndex = parseInt(posStr.replace('pos', ''), 10) - 1;
+  if (Number.isNaN(posIndex) || posIndex < 0) return null;
 
   const intervals = state.mode === 'chord'
     ? (CHORDS[state.scale] ?? CHORDS['Major'])
@@ -197,20 +197,81 @@ function getPositionRange(state) {
   const rootIdx = NOTES.indexOf(normalize(state.key));
   const degreeNote = NOTES[(rootIdx + intervals[degreeIdx]) % 12];
 
-  let anchor = -1;
   let found = 0;
   for (let f = 0; f <= state.fretCount; f++) {
     if (getNoteAtFret(tuningLowestStr, f) === degreeNote) {
-      if (found === cycleNum) { anchor = f; break; }
+      if (found === cycleNum) return f;
       found++;
     }
   }
-  if (anchor < 0) return null;
+  return null;
+}
 
-  return {
-    start: anchor,
-    end:   Math.min(state.fretCount, anchor + 4),
-  };
+function getPositionRange(state) {
+  const anchor = getPositionAnchor(state);
+  if (anchor === null) return null;
+  return { start: anchor, end: Math.min(state.fretCount, anchor + 4) };
+}
+
+function computeWindowDots(state, activeNotes, tuning, octaves, fretRange) {
+  const stringDots = [];
+  for (let si = 0; si < state.strings; si++) {
+    const openNote = tuning[si] ?? 'E';
+    const baseOctave = octaves[si] ?? 3;
+    const y = stringY(si, state.strings);
+    const dots = [];
+    for (let fret = 0; fret <= state.fretCount; fret++) {
+      if (fretRange && (fret < fretRange.start || fret > fretRange.end)) continue;
+      const note = getNoteAtFret(openNote, fret);
+      if (!activeNotes.includes(note)) continue;
+      const midi = noteToMidi(openNote, fret, baseOctave);
+      dots.push({ fret, note, midi, si, y });
+    }
+    stringDots.push(dots);
+  }
+  return stringDots;
+}
+
+function applyBoxDedup(stringDots) {
+  for (let si = 1; si < stringDots.length; si++) {
+    const lower = stringDots[si];
+    const upper = stringDots[si - 1];
+    if (!lower.length || !upper.length) continue;
+    if (lower[lower.length - 1].midi === upper[0].midi) lower.pop();
+  }
+}
+
+// 3-notes-per-string: anchor on the position's degree on the lowest string,
+// then each subsequent (higher-pitch) string takes the next 3 ascending scale
+// tones strictly above the previous string's last note.
+function compute3NPSDots(state, activeNotes, tuning, octaves) {
+  const anchor = getPositionAnchor(state);
+  const stringCount = state.strings;
+  const empty = Array.from({ length: stringCount }, () => []);
+  if (anchor === null) return empty;
+
+  const lowSi = stringCount - 1;
+  const lowOpen = tuning[lowSi] ?? 'E';
+  const lowBaseOct = octaves[lowSi] ?? 2;
+  let minMidi = noteToMidi(lowOpen, anchor, lowBaseOct);
+
+  const stringDots = Array.from({ length: stringCount }, () => []);
+  for (let si = stringCount - 1; si >= 0; si--) {
+    const openNote = tuning[si] ?? 'E';
+    const baseOct = octaves[si] ?? 3;
+    const y = stringY(si, stringCount);
+    const picked = [];
+    for (let fret = 0; fret <= state.fretCount && picked.length < 3; fret++) {
+      const note = getNoteAtFret(openNote, fret);
+      if (!activeNotes.includes(note)) continue;
+      const midi = noteToMidi(openNote, fret, baseOct);
+      if (midi < minMidi) continue;
+      picked.push({ fret, note, midi, si, y });
+    }
+    stringDots[si] = picked;
+    if (picked.length > 0) minMidi = picked[picked.length - 1].midi + 1;
+  }
+  return stringDots;
 }
 
 export function render(state, onDotClick = null) {

@@ -2,7 +2,7 @@ import * as fretboard from './fretboard.js';
 import * as controls from './controls.js';
 import * as audio from './audio.js';
 import * as practice from './practice.js';
-import { TUNINGS, TUNING_OCTAVES } from './music.js';
+import { TUNINGS, TUNING_OCTAVES, SCALES, CHORDS } from './music.js';
 
 const DEFAULTS = {
   key:        'A',
@@ -12,23 +12,30 @@ const DEFAULTS = {
   strings:    6,
   fretCount:  24,
   labelMode:  'intervals',
-  position:   'all',
+  pattern:    'all',
+  position:   'pos1',
   theme:      'dark',
   layoutMode: 'single',
   practice:   false,
 };
 
+function reconcile(s) {
+  if (s.mode === 'chord' && !(s.scale in CHORDS)) s.mode = 'scale';
+  if (s.mode === 'scale' && !(s.scale in SCALES)) s.mode = 'chord';
+  return s;
+}
+
 function loadState() {
   try {
-    const saved = JSON.parse(localStorage.getItem('fretboardlab-v2') ?? '{}');
-    return { ...DEFAULTS, ...saved, practice: false };
+    const saved = JSON.parse(localStorage.getItem('fretboardlab-v3') ?? '{}');
+    return reconcile({ ...DEFAULTS, ...saved, practice: false });
   } catch {
     return { ...DEFAULTS };
   }
 }
 
 function saveState(s) {
-  try { localStorage.setItem('fretboardlab-v2', JSON.stringify(s)); } catch {}
+  try { localStorage.setItem('fretboardlab-v3', JSON.stringify(s)); } catch {}
 }
 
 let state = loadState();

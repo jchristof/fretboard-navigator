@@ -7,20 +7,23 @@ const LABEL_MODES = [
 const STRING_COUNTS = [4, 5, 6, 7, 8];
 
 function positionOptionsHTML() {
-  let html = `<option value="all">All</option>`;
+  let html = '';
   for (let i = 1; i <= 7; i++) {
     html += `<option value="pos${i}">Box ${i}</option>`;
   }
   return html;
 }
 
+const PATTERNS = [['all','All'], ['box','Box'], ['3nps','3 NPS']];
+
 function options(pairs) {
   return pairs.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
 }
 
 function buildHTML() {
-  const scaleOpts = Object.keys(SCALES).map(s => `<option value="${s}">${s}</option>`).join('');
-  const chordOpts = Object.keys(CHORDS).map(c => `<option value="${c}">${c}</option>`).join('');
+  const scaleOpts = Object.keys(SCALES).map(s => `<option value="scale:${s}">${s}</option>`).join('');
+  const chordLabel = c => c === 'Major' ? 'Major Triad' : c === 'Minor' ? 'Minor Triad' : c;
+  const chordOpts = Object.keys(CHORDS).map(c => `<option value="chord:${c}">${chordLabel(c)}</option>`).join('');
   const tuningOpts = Object.keys(TUNINGS).map(t => `<option value="${t}">${t}</option>`).join('');
 
   return `
@@ -49,6 +52,11 @@ function buildHTML() {
       </div>
       <div class="ctrl-sep layout-single-only"></div>
       <div class="ctrl-group layout-single-only">
+        <label for="ctrl-pattern">Pattern</label>
+        <select id="ctrl-pattern">${options(PATTERNS)}</select>
+      </div>
+      <div class="ctrl-sep layout-single-only"></div>
+      <div class="ctrl-group layout-single-only">
         <label for="ctrl-position">Position</label>
         <select id="ctrl-position">${positionOptionsHTML()}</select>
       </div>
@@ -68,6 +76,11 @@ function buildHTML() {
       <div class="ctrl-group">
         <label for="ctrl-labels-2">Labels</label>
         <select id="ctrl-labels-2">${options(LABEL_MODES)}</select>
+      </div>
+      <div class="ctrl-sep"></div>
+      <div class="ctrl-group">
+        <label for="ctrl-pattern-2">Pattern</label>
+        <select id="ctrl-pattern-2">${options(PATTERNS)}</select>
       </div>
       <div class="ctrl-sep"></div>
       <div class="ctrl-group">
@@ -97,13 +110,14 @@ function wireEvents() {
 
   on('ctrl-key', e => _setState({ key: e.target.value }));
   on('ctrl-scale', e => {
-    const val = e.target.value;
-    const mode = CHORDS[val] ? 'chord' : 'scale';
-    _setState({ scale: val, mode });
+    const [m, v] = e.target.value.split(':');
+    _setState({ scale: v, mode: m === 'chord' ? 'chord' : 'scale' });
   });
   on('ctrl-tuning', e => _setState({ tuning: e.target.value }));
   on('ctrl-labels', e => _setState({ labelMode: e.target.value }));
   on('ctrl-labels-2', e => _setState({ labelMode: e.target.value }));
+  on('ctrl-pattern', e => _setState({ pattern: e.target.value }));
+  on('ctrl-pattern-2', e => _setState({ pattern: e.target.value }));
   on('ctrl-position', e => _setState({ position: e.target.value }));
   on('ctrl-position-2', e => _setState({ position: e.target.value }));
   on('ctrl-strings', e => _setState({ strings: parseInt(e.target.value, 10) }));
@@ -130,10 +144,12 @@ export function update(state) {
   const bar = document.getElementById('controls-bar');
   bar.dataset.layout = state.layoutMode;
   syncSelect('ctrl-key', state.key);
-  syncSelect('ctrl-scale', state.scale);
+  syncSelect('ctrl-scale', `${state.mode === 'chord' ? 'chord' : 'scale'}:${state.scale}`);
   syncSelect('ctrl-tuning', state.tuning);
   syncSelect('ctrl-labels', state.labelMode);
   syncSelect('ctrl-labels-2', state.labelMode);
+  syncSelect('ctrl-pattern', state.pattern);
+  syncSelect('ctrl-pattern-2', state.pattern);
   syncSelect('ctrl-position', state.position);
   syncSelect('ctrl-position-2', state.position);
   syncSelect('ctrl-strings', state.strings);
