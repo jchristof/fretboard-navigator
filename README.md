@@ -6,6 +6,9 @@ Interactive guitar fretboard for visualizing scales, modes, chords, and box patt
 
 No install, no sign-in — open the link and start clicking.
 
+![Dark theme — A Major Box 1](docs/screenshots/dark.png)
+![Light theme — A Major Box 1](docs/screenshots/light.png)
+
 ---
 
 ## Controls
